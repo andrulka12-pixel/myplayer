@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src * 'unsafe-inline' 'unsafe-eval' data: blob:; script-src * 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com; style-src * 'unsafe-inline';">
+    <title>Chatter! Music Premium</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Roboto', 'Segoe UI', Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        /* БЕЛАЯ ТЕМА ПО УМОЛЧАНИЮ */
+        body { 
+            background: linear-gradient(180deg, #f3e8ff 0%, #fdfbff 100%);
+            color: #1a052e;
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 90px;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        /* ТЕМНАЯ ТЕМА */
+        body.dark-theme {
+            background: linear-gradient(180deg, #180725 0%, #0c010e 100%);
+            color: #ffffff; 
+        }
+
+        .container { 
+            width: 100%; 
+            max-width: 100vw; 
+            padding: 16px 14px;
+            flex-grow: 1;
+        }
+
+        /* ШАПКА */
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .chatter-logo { font-size: 26px; font-weight: 900; color: #1a052e; letter-spacing: -1px; transition: color 0.3s ease; }
+        body.dark-theme .chatter-logo { color: #ffffff; }
+
+        .add-to-channel-btn {
+            background: rgba(26, 5, 46, 0.06);
+            border: 1px solid rgba(26, 5, 46, 0.15);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #1a052e;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        body.dark-theme .add-to-channel-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+        }
+
+        .my-channel-btn {
+            width: 36px; height: 36px; border-radius: 50%; border: 2px solid #1a052e;
+            overflow: hidden; background: #ffffff; cursor: pointer; color: #1a052e;
+            display: flex; align-items: center; justify-content: center; font-size: 18px;
+            transition: border-color 0.3s ease, background 0.3s ease, color 0.3s ease;
+        }
+        body.dark-theme .my-channel-btn { border-color: #ffffff; background: #220b3a; color: #ffffff; }
+        .my-channel-btn img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* КАТЕГОРИИ */
+        .categories-container { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 24px; transition: opacity 0.3s ease; }
+        .categories-container::-webkit-scrollbar { display: none; }
+        .category-chip {
+            background: rgba(26, 5, 46, 0.06); padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500;
+            color: #1a052e; cursor: pointer; white-space: nowrap; transition: all 0.3s ease;
+        }
+        .category-chip.active { background: #1a052e; color: #ffffff; }
+        
+        body.dark-theme .category-chip { background: rgba(255, 255, 255, 0.06); color: #ffffff; }
+        body.dark-theme .category-chip.active { background: #ffffff; color: #0c010e; }
+
+        /* ЗАГЛУШКА */
+        .empty-state { display: none; text-align: center; padding: 40px; color: rgba(26, 5, 46, 0.5); font-size: 14px; }
+        body.dark-theme .empty-state { color: rgba(255, 255, 255, 0.4); }
+
+        .section-title { font-size: 20px; font-weight: 700; margin-bottom: 14px; color: #1a052e; letter-spacing: -0.3px; transition: color 0.3s ease; }
+        body.dark-theme .section-title { color: #ffffff; }
+
+        /* БЫСТРЫЙ ВЫБОР */
+        .quick-selection-carousel { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 24px; scroll-snap-type: x mandatory; }
+        .quick-selection-carousel::-webkit-scrollbar { display: none; }
+        
+        .carousel-column { display: flex; flex-direction: column; gap: 12px; min-width: 85vw; max-width: 85vw; scroll-snap-align: start; }
+
+        .carousel-item { display: flex; align-items: center; gap: 12px; background: rgba(26, 5, 46, 0.03); padding: 8px; border-radius: 8px; transition: background 0.3s ease; }
+        body.dark-theme .carousel-item { background: rgba(255, 255, 255, 0.03); }
+
+        .carousel-cover {
+            width: 56px; height: 56px; border-radius: 6px; object-fit: cover;
+            background: #ffffff; color: #1a052e; display: flex; align-items: center; justify-content: center; font-size: 20px;
+            border: 1px solid rgba(26, 5, 46, 0.1); transition: all 0.3s ease;
+        }
+        body.dark-theme .carousel-cover { background: #220b3a; color: #ffffff; border: none; }
+        .carousel-meta { flex-grow: 1; overflow: hidden; }
+        .carousel-track-title { font-size: 15px; font-weight: 600; }
+        .carousel-track-desc { font-size: 13px; color: rgba(26, 5, 46, 0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; transition: color 0.3s ease; }
+        body.dark-theme .carousel-track-desc { color: rgba(255,255,255,0.5); }
+
+        /* ВЕРТИКАЛЬНЫЙ СПИСОК ТРЕКОВ */
+        .vertical-track-list { display: flex; flex-direction: column; gap: 14px; margin-top: 10px; }
+        
+        .list-item { display: flex; align-items: center; gap: 14px; padding: 4px 0; position: relative; }
+        .list-cover {
+            width: 48px; height: 48px; border-radius: 4px; object-fit: cover;
+            background: #ffffff; color: #1a052e; display: flex; align-items: center; justify-content: center; font-size: 18px;
+            border: 1px solid rgba(26, 5, 46, 0.1); transition: all 0.3s ease;
+        }
+        body.dark-theme .list-cover { background: #220b3a; color: #ffffff; border: none; }
+        .list-meta { flex-grow: 1; overflow: hidden; }
+        .list-title { font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #1a052e; transition: color 0.3s ease; }
+        body.dark-theme .list-title { color: #fff; }
+        .list-desc { font-size: 13px; color: rgba(26, 5, 46, 0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; transition: color 0.3s ease; }
+        body.dark-theme .list-desc { color: rgba(255,255,255,0.5); }
+        .list-more-btn { background: none; border: none; color: rgba(26, 5, 46, 0.6); font-size: 18px; cursor: pointer; padding: 10px; transition: color 0.3s ease; }
+        body.dark-theme .list-more-btn { color: rgba(255,255,255,0.6); }
+
+        /* МИНИ ПЛЕЕР */
+        .mini-player {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 64px;
+            background: #ffffff; border-top: 1px solid rgba(26, 5, 46, 0.1); box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+            display: none; align-items: center; justify-content: space-between; padding: 0 16px; z-index: 100; transition: all 0.3s ease;
+        }
+        body.dark-theme .mini-player { background: #1c092a; border-top-color: rgba(255,255,255,0.08); box-shadow: none; }
+        .mini-player-info { display: flex; align-items: center; gap: 10px; flex-grow: 1; overflow: hidden; }
+        .mini-player-cover { width: 40px; height: 40px; border-radius: 4px; object-fit: cover; }
+        .mini-player-text { overflow: hidden; }
+        .mini-player-title { font-size: 14px; font-weight: 600; }
+        .mini-player-artist { font-size: 12px; color: rgba(26, 5, 46, 0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color 0.3s ease; }
+        body.dark-theme .mini-player-artist { color: rgba(255,255,255,0.6); }
+        .mini-player-controls { display: flex; align-items: center; gap: 20px; }
+        .mini-btn { background: none; border: none; color: #1a052e; font-size: 22px; cursor: pointer; transition: color 0.3s ease; }
+        body.dark-theme .mini-btn { color: #fff; }
+
+        /* ПОЛНОЭКРАННЫЙ ПЛЕЕР */
+        .fullscreen-player {
+            position: fixed; top: 100%; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(180deg, #f3e8ff 0%, #fdfbff 100%);
+            z-index: 200; transition: top 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
+            padding: 40px 24px; display: flex; flex-direction: column; align-items: center;
+        }
+        body.dark-theme .fullscreen-player { background: linear-gradient(180deg, #1e0a2d 0%, #0c010e 100%); }
+        .fullscreen-player.open { top: 0; }
+        .player-nav { display: flex; justify-content: space-between; width: 100%; align-items: center; margin-bottom: 30px; }
+        .close-player-btn { background: none; border: none; font-size: 24px; color: #1a052e; cursor: pointer; transition: color 0.3s ease; }
+        body.dark-theme .close-player-btn { color: #fff; }
+        .delete-track-btn { font-size: 12px; color: #ef4444; background: rgba(239, 68, 68, 0.1); padding: 6px 12px; border-radius: 8px; border: none; cursor: pointer; }
+        
+        .player-cover { 
+            width: 80vw; height: 80vw; max-width: 300px; max-height: 300px; border-radius: 12px; object-fit: cover; 
+            background: #ffffff; color: #1a052e; box-shadow: 0 15px 35px rgba(26,5,46,0.15); border: 1px solid rgba(26, 5, 46, 0.1);
+            margin-bottom: 35px; display: flex; align-items: center; justify-content: center; font-size: 64px; transition: all 0.3s ease; 
+        }
+        body.dark-theme .player-cover { background: #220b3a; color: #ffffff; box-shadow: 0 15px 35px rgba(0,0,0,0.5); border: none; }
+        .player-cover img { width: 100%; height: 100%; border-radius: 12px; object-fit: cover; }
+        
+        .player-meta { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .player-title { font-size: 22px; font-weight: 700; }
+        .player-artist { font-size: 15px; color: rgba(26, 5, 46, 0.6); transition: color 0.3s ease; }
+        body.dark-theme .player-artist { color: rgba(255,255,255,0.6); }
+        .player-like-btn { background: none; border: none; font-size: 24px; color: rgba(26, 5, 46, 0.4); cursor: pointer; transition: color 0.3s ease; }
+        body.dark-theme .player-like-btn { color: rgba(255,255,255,0.5); }
+        
+        .progress-container { width: 100%; margin-bottom: 25px; }
+        .progress-bar { width: 100%; -webkit-appearance: none; height: 4px; background: rgba(26, 5, 46, 0.15); border-radius: 2px; outline: none; transition: background 0.3s ease; }
+        body.dark-theme .progress-bar { background: rgba(255,255,255,0.2); }
+        .progress-bar::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: #1a052e; transition: background 0.3s ease; }
+        body.dark-theme .progress-bar::-webkit-slider-thumb { background: #fff; }
+        .time-info { display: flex; justify-content: space-between; font-size: 11px; color: rgba(26, 5, 46, 0.5); margin-top: 8px; transition: color 0.3s ease; }
+        body.dark-theme .time-info { color: rgba(255,255,255,0.5); }
+        
+        .player-controls { display: flex; align-items: center; gap: 40px; margin-bottom: 30px; }
+        .control-btn { background: none; border: none; color: #1a052e; font-size: 24px; cursor: pointer; transition: color 0.3s ease; }
+        body.dark-theme .control-btn { color: #fff; }
+        .control-btn.play-pause { width: 64px; height: 64px; border-radius: 50%; background: #1a052e; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 22px; transition: all 0.3s ease; }
+        body.dark-theme .control-btn.play-pause { background: #fff; color: #0c010e; }
+        
+        .player-footer { display: flex; gap: 10px; width: 100%; justify-content: center; }
+        .footer-action-btn { background: rgba(26, 5, 46, 0.05); border: none; padding: 10px 20px; border-radius: 20px; color: #1a052e; font-size: 13px; cursor: pointer; transition: all 0.3s ease; }
+        body.dark-theme .footer-action-btn { background: rgba(255,255,255,0.05); color: #fff; }
+        .review-overlay-box { display: none; margin-top: 15px; background: rgba(26, 5, 46, 0.04); padding: 14px; border-radius: 10px; font-size: 13px; color: #1a052e; width: 100%; max-height: 100px; overflow-y: auto; text-align: center; transition: all 0.3s ease; }
+        body.dark-theme .review-overlay-box { background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.8); }
+
+        /* ЭКРАН ЗАТЕМНЕНИЯ */
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 150; display: none; }
+        .overlay.show { display: block; }
+
+        /* САЙДБАР (ДОБАВЛЕНИЕ ТРЕКА) - ИСПРАВЛЕН Z-INDEX И ПОЗИЦИЯ */
+        .sidebar { position: fixed; top: 0; right: -340px; width: 320px; height: 100%; background: #f3e8ff; box-shadow: -5px 0 25px rgba(26,5,46,0.15); z-index: 400; transition: right 0.3s ease, background 0.3s ease; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+        body.dark-theme .sidebar { background: #180725; box-shadow: -5px 0 25px rgba(0,0,0,0.5); }
+        .sidebar.open { right: 0; }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .input-field { width: 100%; padding: 12px; border: 1px solid rgba(26, 5, 46, 0.1); border-radius: 8px; background: rgba(26, 5, 46, 0.04); color: #1a052e; outline: none; transition: all 0.3s ease; }
+        body.dark-theme .input-field { background: rgba(255, 255, 255, 0.05); border-color: rgba(255,255,255,0.1); color: #fff; }
+        .submit-btn { width: 100%; padding: 14px; background: #1a052e; color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.3s ease; }
+        body.dark-theme .submit-btn { background: #fff; color: #0c010e; }
+
+        /* ОКНО НАСТРОЕК ПРОФИЛЯ / СМЕНЫ ТЕМЫ */
+        .profile-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9); width: 90%; max-width: 320px; background: #ffffff; border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); z-index: 500; display: none; opacity: 0; transition: all 0.3s ease; border: 1px solid rgba(26, 5, 46, 0.1); }
+        body.dark-theme .profile-modal { background: #1c092a; border-color: rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .profile-modal.show { display: block; opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-title { font-weight: 700; font-size: 18px; }
+
+        /* ТУМБЛЕР ТЕМЫ */
+        .theme-switch-container { display: flex; align-items: center; justify-content: space-between; padding: 14px; background: rgba(26, 5, 46, 0.04); border-radius: 10px; transition: background 0.3s ease; }
+        body.dark-theme .theme-switch-container { background: rgba(255, 255, 255, 0.03); }
+        .theme-switch-label { font-size: 15px; font-weight: 600; }
+        
+        .switch-control { position: relative; display: inline-block; width: 46px; height: 24px; }
+        .switch-control input { opacity: 0; width: 0; height: 0; }
+        .slider-toggle { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(26, 5, 46, 0.15); transition: .3s; border-radius: 24px; }
+        body.dark-theme .slider-toggle { background-color: rgba(255, 255, 255, 0.15); }
+        .slider-toggle:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: #1a052e; transition: .3s; border-radius: 50%; }
+        body.dark-theme .slider-toggle:before { background-color: white; }
+        input:checked + .slider-toggle { background-color: #7c3aed; }
+        body.dark-theme input:checked + .slider-toggle { background-color: #a78bfa; }
+        input:checked + .slider-toggle:before { transform: translateX(22px); background-color: #fff; }
+        body.dark-theme input:checked + .slider-toggle:before { background-color: #1a052e; }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+<div class="overlay" id="overlay"></div>
+
+<div class="profile-modal" id="profileModal">
+    <div class="modal-header">
+        <span class="modal-title">Настройки профиля</span>
+        <button class="mini-btn" id="closeProfileModalBtn" style="font-size:24px; line-height:1;">&times;</button>
+    </div>
+    <div class="theme-switch-container">
+        <span class="theme-switch-label">Тёмная тема</span>
+        <label class="switch-control">
+            <input type="checkbox" id="themeToggleCheckbox">
+            <span class="slider-toggle"></span>
+        </label>
+    </div>
+</div>
+
+<div class="container">
+    <div class="header-actions">
+        <span class="chatter-logo">Music</span>
+        <button class="add-to-channel-btn" id="openSidebarBtn">+ Добавить</button>
+        <div class="my-channel-btn" id="myChannelBtn">
+            <span id="pPlaceholder">👤</span>
+            <img src="" id="pAvatar" style="display: none;">
+        </div>
+    </div>
+
+    <div class="categories-container" id="categoriesBox">
+        <div class="category-chip active" data-tag="all">Все</div>
+        <div class="category-chip" data-tag="рэп">Рэп</div>
+        <div class="category-chip" data-tag="чил">Чилл</div>
+        <div class="category-chip" data-tag="микс">Микс</div>
+        <div class="category-chip" data-tag="инди">Инди</div>
+    </div>
+
+    <div class="empty-state" id="emptyState">Тут пока пусто. Загрузи первый трек!</div>
+
+    <div id="quickSelectionSection">
+        <h2 class="section-title" id="carouselTitleText">Быстрый выбор</h2>
+        <div class="quick-selection-carousel" id="carouselContainer"></div>
+    </div>
+
+    <div id="verticalListSection" style="margin-top: 15px;">
+        <h2 class="section-title" id="listTitleText">Рекомендуем вам</h2>
+        <div class="vertical-track-list" id="verticalTrackList"></div>
+    </div>
+</div>
+
+<div class="mini-player" id="miniPlayer">
+    <div class="mini-player-info" id="miniPlayerInfo">
+        <img src="" class="mini-player-cover" id="miniCover" alt="">
+        <div class="mini-player-text">
+            <div class="mini-player-title" id="miniTitle">Название</div>
+            <div class="mini-player-artist" id="miniArtist">Исполнитель</div>
+        </div>
+    </div>
+    <div class="mini-player-controls">
+        <button class="mini-btn" id="miniPlayPauseBtn">▶</button>
+        <button class="mini-btn" id="miniNextBtn">⏭</button>
+    </div>
+</div>
+
+<div class="fullscreen-player" id="fullscreenPlayer">
+    <div class="player-nav">
+        <button class="close-player-btn" id="closePlayerBtn">▼</button>
+        <button class="delete-track-btn" id="deleteTrackBtn">Удалить</button>
+    </div>
+    <div class="player-cover" id="pCover">🎵</div>
+    <div class="player-meta">
+        <div>
+            <div class="player-title" id="pTitle">Название песни</div>
+            <div class="player-artist" id="pArtist">Исполнитель</div>
+        </div>
+        <button class="player-like-btn" id="pLikeBtn">❤</button>
+    </div>
+    <div class="progress-container">
+        <input type="range" class="progress-bar" id="progressBar" value="0" max="100">
+        <div class="time-info">
+            <span id="currentTime">0:00</span>
+            <span id="durationTime">0:00</span>
+        </div>
+    </div>
+    <div class="player-controls">
+        <button class="control-btn" id="prevBtn">⏮</button>
+        <button class="control-btn play-pause" id="playPauseBtn">▶</button>
+        <button class="control-btn" id="nextBtn">⏭</button>
+    </div>
+    <div class="player-footer">
+        <button class="footer-action-btn" id="toggleReviewBtn">Текст</button>
+    </div>
+    <div class="review-overlay-box" id="reviewBox"></div>
+</div>
+
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <span style="font-weight:700; font-size: 18px;">Новый трек</span>
+        <button class="mini-btn" id="closeSidebarBtn" style="font-size:24px;">&times;</button>
+    </div>
+
+    <label style="background:rgba(26,5,46,0.04); border:2px dashed rgba(26,5,46,0.15); padding:15px; text-align:center; border-radius:8px; cursor:pointer; font-size:13px; margin-top:10px;" id="fileLabel">
+        <span id="fileStatusText">Выбрать .mp3 файл</span>
+        <input type="file" id="fileInput" accept="audio/mp3" style="display:none;">
+    </label>
+    <div id="metaFields" style="display:none; flex-direction:column; gap:10px;">
+        <input type="text" id="trackName" class="input-field" placeholder="Название песни">
+        <input type="text" id="trackDesc" class="input-field" placeholder="Исполнитель">
+        <input type="text" id="trackTag" class="input-field" placeholder="Тег (рэп, чил, микс, инди)">
+        <input type="text" id="trackCoverUrl" class="input-field" placeholder="Ссылка на обложку (URL)">
+        <textarea id="trackReview" class="input-field" rows="3" placeholder="Текст песни..."></textarea>
+        <button id="submitBtn" class="submit-btn">Опубликовать</button>
+        <div id="loader" style="display:none; text-align:center; font-size:12px; color:rgba(26, 5, 46, 0.5);">Загрузка...</div>
+    </div>
+</div>
+
+<audio id="audioEngine" style="display:none;"></audio>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAV9gknWOGVFGgmsRqtKj2grmXPApIZ4PM",
+        authDomain: "chatter-b4ddd.firebaseapp.com",
+        databaseURL: "https://chatter-b4ddd-default-rtdb.firebaseio.com",
+        projectId: "chatter-b4ddd",
+        storageBucket: "chatter-b4ddd.firebasestorage.app",
+        messagingSenderId: "264160225694",
+        appId: "1:264160225694:web:157cc29f111b2fef54ce8f"
+    };
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const dbRef = firebase.database().ref('shared_tracks');
+    const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1508147689538191360/xSwmH-1SduJMMiaDkObIn7zHmedg3h3OJFcIwdo7xr2DNIw3tfmvktqvrbvWNtwewQdL";
+
+    const USER_ID = localStorage.getItem('chatter_uid') || `user_${Date.now()}_${Math.random().toString(36).substr(2,9)}`;
+    localStorage.setItem('chatter_uid', USER_ID);
+
+    let allTracksData = [];
+    let currentFilteredTracks = [];
+    let activeTrackIndex = -1;
+    let currentCategoryFilter = "all";
+    let currentScopeFilter = "all";
+
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    const profileModal = document.getElementById('profileModal');
+    const carouselContainer = document.getElementById('carouselContainer');
+    const verticalTrackList = document.getElementById('verticalTrackList');
+    const emptyState = document.getElementById('emptyState');
+    const fPlayer = document.getElementById('fullscreenPlayer');
+    const miniPlayer = document.getElementById('miniPlayer');
+    const audioEngine = document.getElementById('audioEngine');
+    const myChannelBtn = document.getElementById('myChannelBtn');
+    const carouselTitleText = document.getElementById('carouselTitleText');
+    const listTitleText = document.getElementById('listTitleText');
+    const themeToggleCheckbox = document.getElementById('themeToggleCheckbox');
+
+    // Настройка темы: по умолчанию Белая (светлая)
+    const savedTheme = localStorage.getItem('chatter_theme') || 'light';
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-theme');
+        themeToggleCheckbox.checked = true;
+    } else {
+        document.body.classList.remove('dark-theme');
+        themeToggleCheckbox.checked = false;
+    }
+
+    // Переключение темы из модального окна профиля
+    themeToggleCheckbox.addEventListener('change', () => {
+        if (themeToggleCheckbox.checked) {
+            document.body.classList.add('dark-theme');
+            localStorage.setItem('chatter_theme', 'dark');
+        } else {
+            document.body.classList.remove('dark-theme');
+            localStorage.setItem('chatter_theme', 'light');
+        }
+        renderUI();
+    });
+
+    // Открытие модалки профиля по клику на аватарку
+    myChannelBtn.addEventListener('click', (e) => {
+        profileModal.classList.add('show');
+        overlay.classList.add('show');
+    });
+
+    // Закрытие модалки профиля
+    document.getElementById('closeProfileModalBtn').addEventListener('click', closeProfileModal);
+    
+    function closeProfileModal() {
+        profileModal.classList.remove('show');
+        if(!sidebar.classList.contains('open')) {
+            overlay.classList.remove('show');
+        }
+    }
+
+    // Сайдбар добавления треков
+    document.getElementById('openSidebarBtn').addEventListener('click', () => { sidebar.classList.add('open'); overlay.classList.add('show'); });
+    document.getElementById('closeSidebarBtn').addEventListener('click', () => { sidebar.classList.remove('open'); overlay.classList.remove('show'); });
+    
+    overlay.addEventListener('click', () => { 
+        sidebar.classList.remove('open'); 
+        closeProfileModal();
+        fPlayer.classList.remove('open'); 
+    });
+
+    const fileInput = document.getElementById('fileInput');
+    const metaFields = document.getElementById('metaFields');
+    const fileStatusText = document.getElementById('fileStatusText');
+    const submitBtn = document.getElementById('submitBtn');
+
+    fileInput.addEventListener('change', (e) => {
+        if(e.target.files.length > 0) {
+            fileStatusText.innerText = "Файл выбран ✓";
+            document.getElementById('trackName').value = e.target.files[0].name.replace(/\.[^/.]+$/, "");
+            metaFields.style.display = 'flex';
+        }
+    });
+
+    submitBtn.addEventListener('click', async () => {
+        const file = fileInput.files[0];
+        if(!file) return;
+        const loader = document.getElementById('loader');
+        loader.style.display = 'block';
+        submitBtn.style.display = 'none';
+
+        try {
+            const formData = new FormData();
+            formData.append('files[0]', file);
+            const response = await fetch(DISCORD_WEBHOOK_URL, { method: 'POST', body: formData });
+            const discordData = await response.json();
+            
+            const trackData = {
+                title: document.getElementById('trackName').value || "Без названия",
+                desc: document.getElementById('trackDesc').value || "Автор Chatter!",
+                tag: document.getElementById('trackTag').value.trim().toLowerCase() || "общие",
+                cover: document.getElementById('trackCoverUrl').value.trim() || "",
+                review: document.getElementById('trackReview').value || "",
+                url: discordData.attachments[0].url,
+                ownerId: USER_ID,
+                timestamp: Date.now()
+            };
+
+            await dbRef.push(trackData);
+            resetForm();
+            sidebar.classList.remove('open'); overlay.classList.remove('show');
+        } catch (e) { alert('Ошибка сети при загрузке.'); }
+        finally { loader.style.display = 'none'; submitBtn.style.display = 'block'; }
+    });
+
+    dbRef.on('value', (snapshot) => {
+        allTracksData = [];
+        let hasMyTracks = false;
+        snapshot.forEach((childSnapshot) => {
+            let item = childSnapshot.val();
+            item.key = childSnapshot.key;
+            if(item.ownerId === USER_ID) hasMyTracks = true;
+            allTracksData.push(item);
+        });
+        if(hasMyTracks) {
+            document.getElementById('pPlaceholder').style.display = 'none';
+            document.getElementById('pAvatar').src = `https://api.dicebear.com/8.x/notionists/svg?seed=${USER_ID}&backgroundColor=220b3a`;
+            document.getElementById('pAvatar').style.display = 'block';
+        }
+        renderUI();
+    });
+
+    function renderUI() {
+        carouselContainer.innerHTML = "";
+        verticalTrackList.innerHTML = "";
+        
+        const sorted = [...allTracksData].sort((a,b) => b.timestamp - a.timestamp);
+        let filtered = sorted.filter(t => currentScopeFilter === "all" || t.ownerId === USER_ID);
+        
+        if(currentScopeFilter === "all") {
+            filtered = filtered.filter(t => currentCategoryFilter === "all" || t.tag === currentCategoryFilter);
+        }
+
+        currentFilteredTracks = filtered;
+
+        if (currentFilteredTracks.length === 0) {
+            emptyState.style.display = 'block';
+            document.getElementById('quickSelectionSection').style.display = 'none';
+            document.getElementById('verticalListSection').style.display = 'none';
+            return;
+        }
+
+        emptyState.style.display = 'none';
+        document.getElementById('quickSelectionSection').style.display = 'block';
+        document.getElementById('verticalListSection').style.display = 'block';
+
+        let currentColumn = null;
+        currentFilteredTracks.forEach((data, index) => {
+            if (index % 2 === 0) {
+                currentColumn = document.createElement('div');
+                currentColumn.className = 'carousel-column';
+                carouselContainer.appendChild(currentColumn);
+            }
+
+            const item = document.createElement('div');
+            item.className = 'carousel-item';
+            item.onclick = () => openPlayer(index);
+
+            const coverHTML = data.cover 
+                ? `<img src="${escapeHTML(data.cover)}" class="carousel-cover" onerror="this.onerror=null; this.outerHTML='<div class=carousel-cover>🎵</div>';">`
+                : `<div class="carousel-cover">🎵</div>`;
+
+            item.innerHTML = `
+                ${coverHTML}
+                <div class="carousel-meta">
+                    <div class="carousel-track-title">${escapeHTML(data.title)}</div>
+                    <div class="carousel-track-desc">${escapeHTML(data.desc)}</div>
+                </div>
+            `;
+            currentColumn.appendChild(item);
+        });
+
+        currentFilteredTracks.forEach((data, index) => {
+            const row = document.createElement('div');
+            row.className = 'list-item';
+            row.onclick = (e) => {
+                if(e.target.classList.contains('list-more-btn')) return;
+                openPlayer(index);
+            };
+
+            const coverHTML = data.cover 
+                ? `<img src="${escapeHTML(data.cover)}" class="list-cover" onerror="this.onerror=null; this.outerHTML='<div class=list-cover>🎵</div>';">`
+                : `<div class="list-cover">🎵</div>`;
+
+            row.innerHTML = `
+                ${coverHTML}
+                <div class="list-meta">
+                    <div class="list-title">${escapeHTML(data.title)}</div>
+                    <div class="list-desc">${escapeHTML(data.desc)} • Плеер</div>
+                </div>
+                <button class="list-more-btn">⋮</button>
+            `;
+            verticalTrackList.appendChild(row);
+        });
+    }
+
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const miniPlayPauseBtn = document.getElementById('miniPlayPauseBtn');
+    const progressBar = document.getElementById('progressBar');
+    const currentTimeText = document.getElementById('currentTime');
+    const durationTimeText = document.getElementById('durationTime');
+    const reviewBox = document.getElementById('reviewBox');
+
+    function openPlayer(index) {
+        activeTrackIndex = index;
+        const track = currentFilteredTracks[index];
+
+        document.getElementById('pTitle').innerText = track.title;
+        document.getElementById('pArtist').innerText = track.desc;
+        document.getElementById('miniTitle').innerText = track.title;
+        document.getElementById('miniArtist').innerText = track.desc;
+
+        const coverBox = document.getElementById('pCover');
+        const miniCover = document.getElementById('miniCover');
+        
+        if(track.cover) {
+            coverBox.innerHTML = `<img src="${escapeHTML(track.cover)}" onerror="this.onerror=null; this.outerHTML='🎵';">`;
+            miniCover.src = track.cover;
+            miniCover.style.display = 'block';
+        } else {
+            coverBox.innerHTML = "🎵";
+            miniCover.style.display = 'none';
+        }
+
+        if(track.review) {
+            reviewBox.innerText = track.review;
+            document.getElementById('toggleReviewBtn').style.display = "block";
+        } else {
+            document.getElementById('toggleReviewBtn').style.display = "none";
+            reviewBox.style.display = "none";
+        }
+
+        audioEngine.src = track.url;
+        audioEngine.play();
+        
+        playPauseBtn.innerText = "⏸";
+        miniPlayPauseBtn.innerText = "⏸";
+        miniPlayer.style.display = 'flex';
+    }
+
+    function togglePlayback() {
+        if(audioEngine.paused) {
+            audioEngine.play();
+            playPauseBtn.innerText = "⏸";
+            miniPlayPauseBtn.innerText = "⏸";
+        } else {
+            audioEngine.pause();
+            playPauseBtn.innerText = "▶";
+            miniPlayPauseBtn.innerText = "▶";
+        }
+    }
+
+    playPauseBtn.addEventListener('click', togglePlayback);
+    miniPlayPauseBtn.addEventListener('click', togglePlayback);
+    document.getElementById('miniPlayerInfo').addEventListener('click', () => fPlayer.classList.add('open'));
+    document.getElementById('closePlayerBtn').addEventListener('click', () => fPlayer.classList.remove('open'));
+
+    document.getElementById('prevBtn').addEventListener('click', () => { if(activeTrackIndex > 0) openPlayer(activeTrackIndex - 1); });
+    const nextTrack = () => { if(activeTrackIndex < currentFilteredTracks.length - 1) openPlayer(activeTrackIndex + 1); };
+    document.getElementById('nextBtn').addEventListener('click', nextTrack);
+    document.getElementById('miniNextBtn').addEventListener('click', nextTrack);
+
+    document.getElementById('deleteTrackBtn').addEventListener('click', async () => {
+        if(activeTrackIndex === -1) return;
+        const track = currentFilteredTracks[activeTrackIndex];
+        if(confirm(`Удалить трек "${track.title}"?`)) {
+            audioEngine.pause();
+            fPlayer.classList.remove('open');
+            miniPlayer.style.display = 'none';
+            await dbRef.child(track.key).remove();
+        }
+    });
+
+    audioEngine.addEventListener('timeupdate', () => {
+        if(!isNaN(audioEngine.duration)) {
+            progressBar.value = (audioEngine.currentTime / audioEngine.duration) * 100;
+            currentTimeText.innerText = formatTime(audioEngine.currentTime);
+            durationTimeText.innerText = formatTime(audioEngine.duration);
+        }
+    });
+
+    progressBar.addEventListener('input', () => { audioEngine.currentTime = (progressBar.value / 100) * audioEngine.duration; });
+    document.getElementById('toggleReviewBtn').addEventListener('click', () => { reviewBox.style.display = reviewBox.style.display === "block" ? "none" : "block"; });
+
+    document.getElementById('categoriesBox').addEventListener('click', (e) => {
+        if(e.target.classList.contains('category-chip')) {
+            document.querySelectorAll('.category-chip').forEach(c => c.classList.remove('active'));
+            e.target.classList.add('active');
+            currentCategoryFilter = e.target.getAttribute('data-tag');
+            renderUI();
+        }
+    });
+
+    function resetForm() {
+        fileInput.value = ''; metaFields.style.display = 'none';
+        fileStatusText.innerText = "Выбрать .mp3 файл";
+        document.getElementById('trackName').value = ''; document.getElementById('trackDesc').value = '';
+        document.getElementById('trackTag').value = ''; document.getElementById('trackCoverUrl').value = '';
+        document.getElementById('trackReview').value = '';
+    }
+
+    function formatTime(secs) {
+        let m = Math.floor(secs / 60), s = Math.floor(secs % 60);
+        return `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    function escapeHTML(str) {
+        return str.replace(/[&<>'"]/g, t => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[t] || t));
+    }
+</script>
+</body>
+</html>
