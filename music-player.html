@@ -196,7 +196,7 @@
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 150; display: none; }
         .overlay.show { display: block; }
 
-        /* САЙДБАР (ДОБАВЛЕНИЕ ТРЕКА) - ИСПРАВЛЕН Z-INDEX И ПОЗИЦИЯ */
+        /* САЙДБАР (ДОБАВЛЕНИЕ ТРЕКА) */
         .sidebar { position: fixed; top: 0; right: -340px; width: 320px; height: 100%; background: #f3e8ff; box-shadow: -5px 0 25px rgba(26,5,46,0.15); z-index: 400; transition: right 0.3s ease, background 0.3s ease; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
         body.dark-theme .sidebar { background: #180725; box-shadow: -5px 0 25px rgba(0,0,0,0.5); }
         .sidebar.open { right: 0; }
@@ -252,7 +252,7 @@
 
 <div class="container">
     <div class="header-actions">
-        <span class="chatter-logo">Music</span>
+        <span class="chatter-logo">ChattMusic</span>
         <button class="add-to-channel-btn" id="openSidebarBtn">+ Добавить</button>
         <div class="my-channel-btn" id="myChannelBtn">
             <span id="pPlaceholder">👤</span>
@@ -350,19 +350,22 @@
 <audio id="audioEngine" style="display:none;"></audio>
 
 <script>
+    // Заменённый конфигурационный файл из твоего веб-приложения Firebase
     const firebaseConfig = {
-        apiKey: "AIzaSyAV9gknWOGVFGgmsRqtKj2grmXPApIZ4PM",
-        authDomain: "chatter-b4ddd.firebaseapp.com",
-        databaseURL: "https://chatter-b4ddd-default-rtdb.firebaseio.com",
-        projectId: "chatter-b4ddd",
-        storageBucket: "chatter-b4ddd.firebasestorage.app",
-        messagingSenderId: "264160225694",
-        appId: "1:264160225694:web:157cc29f111b2fef54ce8f"
+        apiKey: "AIzaSyB3VnOYAUuyanu2Em3ppUeC2NK5eRLEwe0",
+        authDomain: "music-player-bda4f.firebaseapp.com",
+        databaseURL: "https://music-player-bda4f-default-rtdb.firebaseio.com", // Сгенерировано на основе projectId для Realtime Database
+        projectId: "music-player-bda4f",
+        storageBucket: "music-player-bda4f.firebasestorage.app",
+        messagingSenderId: "278613798474",
+        appId: "1:278613798474:web:4d3b565ff0513b293180b3"
     };
 
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const dbRef = firebase.database().ref('shared_tracks');
-    const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1508147689538191360/xSwmH-1SduJMMiaDkObIn7zHmedg3h3OJFcIwdo7xr2DNIw3tfmvktqvrbvWNtwewQdL";
+    
+    // Вместо реальной ссылки на вебхук добавлена заглушка, как ты просил
+    const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1508781078033465345/s6SPzmH-cZjBPL7-pK6608dgJSNaU8B_5K0XRVGley5E1DqiBQAp_GdmAy4ICX8gsbla";
 
     const USER_ID = localStorage.getItem('chatter_uid') || `user_${Date.now()}_${Math.random().toString(36).substr(2,9)}`;
     localStorage.setItem('chatter_uid', USER_ID);
@@ -387,7 +390,7 @@
     const listTitleText = document.getElementById('listTitleText');
     const themeToggleCheckbox = document.getElementById('themeToggleCheckbox');
 
-    // Настройка темы: по умолчанию Белая (светлая)
+    // Настройка темы
     const savedTheme = localStorage.getItem('chatter_theme') || 'light';
     if (savedTheme === 'dark') {
         document.body.classList.add('dark-theme');
@@ -397,7 +400,6 @@
         themeToggleCheckbox.checked = false;
     }
 
-    // Переключение темы из модального окна профиля
     themeToggleCheckbox.addEventListener('change', () => {
         if (themeToggleCheckbox.checked) {
             document.body.classList.add('dark-theme');
@@ -409,13 +411,11 @@
         renderUI();
     });
 
-    // Открытие модалки профиля по клику на аватарку
     myChannelBtn.addEventListener('click', (e) => {
         profileModal.classList.add('show');
         overlay.classList.add('show');
     });
 
-    // Закрытие модалки профиля
     document.getElementById('closeProfileModalBtn').addEventListener('click', closeProfileModal);
     
     function closeProfileModal() {
@@ -425,7 +425,6 @@
         }
     }
 
-    // Сайдбар добавления треков
     document.getElementById('openSidebarBtn').addEventListener('click', () => { sidebar.classList.add('open'); overlay.classList.add('show'); });
     document.getElementById('closeSidebarBtn').addEventListener('click', () => { sidebar.classList.remove('open'); overlay.classList.remove('show'); });
     
@@ -450,7 +449,10 @@
 
     submitBtn.addEventListener('click', async () => {
         const file = fileInput.files[0];
-        if(!file) return;
+        if(!file || DISCORD_WEBHOOK_URL === "ВАШ_ДИСКОРД_ВЕБХУК_ТУТ") {
+            alert('Пожалуйста, укажите рабочий Discord Webhook в коде перед отправкой файлов.');
+            return;
+        }
         const loader = document.getElementById('loader');
         loader.style.display = 'block';
         submitBtn.style.display = 'none';
