@@ -126,6 +126,24 @@
         .list-more-btn { background: none; border: none; color: rgba(0, 0, 0, 0.6); font-size: 18px; cursor: pointer; padding: 10px; transition: color 0.3s ease; }
         body.dark-theme .list-more-btn { color: rgba(255,255,255,0.6); }
 
+        .list-heart-btn { background: none; border: none; color: rgba(0, 0, 0, 0.35); font-size: 19px; cursor: pointer; padding: 8px; line-height: 1; transition: color 0.15s ease, transform 0.15s ease; }
+        .list-heart-btn.liked { color: #ef4444; }
+        .list-heart-btn:active { transform: scale(1.25); }
+        body.dark-theme .list-heart-btn { color: rgba(255,255,255,0.35); }
+        body.dark-theme .list-heart-btn.liked { color: #ef4444; }
+
+        /* ПЛЕЙЛИСТ "ПОНРАВИВШАЯСЯ МУЗЫКА" */
+        .liked-playlist-view { display: none; }
+        .liked-playlist-header { display: flex; flex-direction: column; align-items: center; margin-bottom: 26px; }
+        .liked-playlist-cover { width: 120px; height: 120px; border-radius: 10px; background: #ffffff; border: 1px solid rgba(26, 5, 46, 0.1); display: flex; align-items: center; justify-content: center; font-size: 46px; margin-bottom: 16px; transition: all 0.3s ease; }
+        body.dark-theme .liked-playlist-cover { background: #1a1a1a; border: none; }
+        .liked-playlist-title { font-size: 20px; font-weight: 700; color: #000000; text-align: center; transition: color 0.3s ease; }
+        body.dark-theme .liked-playlist-title { color: #ffffff; }
+        .liked-playlist-subtitle { font-size: 13px; color: rgba(0,0,0,0.5); text-align: center; margin-top: 6px; max-width: 280px; transition: color 0.3s ease; }
+        body.dark-theme .liked-playlist-subtitle { color: rgba(255,255,255,0.5); }
+        .liked-playlist-empty { text-align: center; padding: 30px 0; color: rgba(31, 31, 31, 0.5); font-size: 14px; }
+        body.dark-theme .liked-playlist-empty { color: rgba(255,255,255,0.4); }
+
         /* МИНИ ПЛЕЕР */
         .mini-player {
             position: fixed; bottom: 0; left: 0; width: 100%; height: 64px;
@@ -169,8 +187,11 @@
         .player-title { font-size: 22px; font-weight: 700; }
         .player-artist { font-size: 15px; color: rgba(20, 20, 20, 0.6); transition: color 0.3s ease; }
         body.dark-theme .player-artist { color: rgba(255,255,255,0.6); }
-        .player-like-btn { background: none; border: none; font-size: 24px; color: rgba(26, 5, 46, 0.4); cursor: pointer; transition: color 0.3s ease; }
+        .player-like-btn { background: none; border: none; font-size: 24px; color: rgba(26, 5, 46, 0.4); cursor: pointer; transition: color 0.15s ease, transform 0.15s ease; }
+        .player-like-btn:active { transform: scale(1.2); }
+        .player-like-btn.liked { color: #ef4444; }
         body.dark-theme .player-like-btn { color: rgba(255,255,255,0.5); }
+        body.dark-theme .player-like-btn.liked { color: #ef4444; }
         
         .progress-container { width: 100%; margin-bottom: 25px; }
         .progress-bar { width: 100%; -webkit-appearance: none; height: 4px; background: rgba(26, 5, 46, 0.15); border-radius: 2px; outline: none; transition: background 0.3s ease; }
@@ -261,6 +282,7 @@
     </div>
 
     <div class="categories-container" id="categoriesBox">
+        <div class="category-chip" data-tag="liked">👍 Понравившаяся музыка</div>
         <div class="category-chip active" data-tag="all">Все</div>
         <div class="category-chip" data-tag="рэп">Рэп</div>
         <div class="category-chip" data-tag="чил">Чилл</div>
@@ -269,6 +291,16 @@
     </div>
 
     <div class="empty-state" id="emptyState">Тут пока пусто. Загрузи первый трек!</div>
+
+    <div class="liked-playlist-view" id="likedPlaylistView">
+        <div class="liked-playlist-header">
+            <div class="liked-playlist-cover">👍</div>
+            <div class="liked-playlist-title">Понравившаяся музыка</div>
+            <div class="liked-playlist-subtitle">Здесь отображаются все песни, которым Вы поставили "❤"</div>
+        </div>
+        <div class="vertical-track-list" id="likedTrackList"></div>
+        <div class="liked-playlist-empty" id="likedEmptyState" style="display:none;">Пока нет понравившихся треков. Нажмите ❤ на треке, чтобы добавить его сюда.</div>
+    </div>
 
     <div id="quickSelectionSection">
         <h2 class="section-title" id="carouselTitleText">Быстрый выбор</h2>
@@ -340,7 +372,11 @@
         <input type="text" id="trackName" class="input-field" placeholder="Название песни">
         <input type="text" id="trackDesc" class="input-field" placeholder="Исполнитель">
         <input type="text" id="trackTag" class="input-field" placeholder="Тег (рэп, чил, микс, инди) (Необязательно)">
-        <input type="text" id="trackCoverUrl" class="input-field" placeholder="Ссылка на обложку (URL) (Необязательно)">
+        <label style="background:rgba(26,5,46,0.04); border:2px dashed rgba(26,5,46,0.15); padding:15px; text-align:center; border-radius:8px; cursor:pointer; font-size:13px; display:flex; flex-direction:column; align-items:center; gap:8px;" id="coverLabel">
+            <span id="coverStatusText">Выбрать обложку (Необязательно)</span>
+            <img id="coverPreview" style="display:none; width:70px; height:70px; border-radius:8px; object-fit:cover;">
+            <input type="file" id="coverInput" accept="image/*" style="display:none;">
+        </label>
         <textarea id="trackReview" class="input-field" rows="3" placeholder="Текст песни..." (Необязательно)></textarea>
         <button id="submitBtn" class="submit-btn">Опубликовать</button>
         <div id="loader" style="display:none; text-align:center; font-size:12px; color:rgba(22, 22, 22, 0.5);">Загрузка...</div>
@@ -375,6 +411,8 @@
     let activeTrackIndex = -1;
     let currentCategoryFilter = "all";
     let currentScopeFilter = "all";
+    let currentView = "normal"; // "normal" | "liked"
+    let likedTrackKeys = JSON.parse(localStorage.getItem('chatter_liked_tracks') || '[]');
 
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('overlay');
@@ -388,6 +426,9 @@
     const myChannelBtn = document.getElementById('myChannelBtn');
     const carouselTitleText = document.getElementById('carouselTitleText');
     const listTitleText = document.getElementById('listTitleText');
+    const likedPlaylistView = document.getElementById('likedPlaylistView');
+    const likedTrackList = document.getElementById('likedTrackList');
+    const likedEmptyState = document.getElementById('likedEmptyState');
     const themeToggleCheckbox = document.getElementById('themeToggleCheckbox');
 
     // Настройка темы
@@ -447,6 +488,47 @@
         }
     });
 
+    // Загрузка обложки: читаем файл, обрезаем по центру в квадрат и сохраняем как base64,
+    // чтобы обложка хранилась прямо в базе и была видна всем пользователям.
+    const coverInput = document.getElementById('coverInput');
+    const coverStatusText = document.getElementById('coverStatusText');
+    const coverPreview = document.getElementById('coverPreview');
+    let selectedCoverDataUrl = "";
+    const COVER_TARGET_SIZE = 500; // итоговый размер квадратной обложки (px)
+
+    coverInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            alert('Пожалуйста, выберите файл изображения.');
+            coverInput.value = '';
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const img = new Image();
+            img.onload = () => {
+                const size = Math.min(img.width, img.height);
+                const sx = (img.width - size) / 2;
+                const sy = (img.height - size) / 2;
+
+                const canvas = document.createElement('canvas');
+                canvas.width = COVER_TARGET_SIZE;
+                canvas.height = COVER_TARGET_SIZE;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, sx, sy, size, size, 0, 0, COVER_TARGET_SIZE, COVER_TARGET_SIZE);
+
+                selectedCoverDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                coverPreview.src = selectedCoverDataUrl;
+                coverPreview.style.display = 'block';
+                coverStatusText.innerText = "Обложка выбрана ✓ (обрезана в квадрат)";
+            };
+            img.onerror = () => alert('Не удалось прочитать изображение.');
+            img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+
     submitBtn.addEventListener('click', async () => {
         const file = fileInput.files[0];
         if(!file || DISCORD_WEBHOOK_URL === "ВАШ_ДИСКОРД_ВЕБХУК_ТУТ") {
@@ -460,16 +542,19 @@
         try {
             const formData = new FormData();
             formData.append('files[0]', file);
-            const response = await fetch(DISCORD_WEBHOOK_URL, { method: 'POST', body: formData });
+            // ?wait=true заставляет Discord вернуть полный объект сообщения (включая id),
+            // который нужен, чтобы потом всегда получать свежую (не протухшую) ссылку на файл.
+            const response = await fetch(`${DISCORD_WEBHOOK_URL}?wait=true`, { method: 'POST', body: formData });
             const discordData = await response.json();
             
             const trackData = {
                 title: document.getElementById('trackName').value || "Без названия",
                 desc: document.getElementById('trackDesc').value || "Автор Chatter!",
                 tag: document.getElementById('trackTag').value.trim().toLowerCase() || "общие",
-                cover: document.getElementById('trackCoverUrl').value.trim() || "",
+                cover: selectedCoverDataUrl || "",
                 review: document.getElementById('trackReview').value || "",
                 url: discordData.attachments[0].url,
+                messageId: discordData.id || "",
                 ownerId: USER_ID,
                 timestamp: Date.now()
             };
@@ -495,8 +580,91 @@
             document.getElementById('pAvatar').src = `https://https://api.dicebear.com/8.x/notionists/svg?seed=${USER_ID}&backgroundColor=#fffff`;
             document.getElementById('pAvatar').style.display = 'block';
         }
-        renderUI();
+        if (currentView === 'liked') {
+            renderLikedPlaylistView();
+        } else {
+            renderUI();
+        }
     });
+
+    function isLiked(key) {
+        return likedTrackKeys.includes(key);
+    }
+
+    function toggleLike(key, btnEl) {
+        if (navigator.vibrate) navigator.vibrate(40);
+        const idx = likedTrackKeys.indexOf(key);
+        if (idx === -1) {
+            likedTrackKeys.push(key);
+        } else {
+            likedTrackKeys.splice(idx, 1);
+        }
+        localStorage.setItem('chatter_liked_tracks', JSON.stringify(likedTrackKeys));
+
+        if (btnEl) {
+            btnEl.classList.toggle('liked', isLiked(key));
+        }
+        // Обновить сердечко в полноэкранном плеере, если открыт этот же трек
+        if (activeTrackIndex !== -1 && currentFilteredTracks[activeTrackIndex] && currentFilteredTracks[activeTrackIndex].key === key) {
+            pLikeBtn.classList.toggle('liked', isLiked(key));
+        }
+        // Если сейчас открыт плейлист "Понравившаяся музыка" - перерисовать его
+        if (currentView === 'liked') {
+            renderLikedPlaylistView();
+        } else {
+            // Синхронизировать все сердечки этого трека на экране (карусель список может дублироваться)
+            document.querySelectorAll(`.list-heart-btn[data-key="${key}"]`).forEach(b => b.classList.toggle('liked', isLiked(key)));
+        }
+    }
+
+    function buildTrackRow(data, index, sourceList) {
+        const row = document.createElement('div');
+        row.className = 'list-item';
+        row.onclick = (e) => {
+            if (e.target.closest('.list-more-btn') || e.target.closest('.list-heart-btn')) return;
+            openPlayer(index, sourceList);
+        };
+
+        const coverHTML = data.cover
+            ? `<img src="${escapeHTML(data.cover)}" class="list-cover" onerror="this.onerror=null; this.outerHTML='<div class=list-cover>🎵</div>';">`
+            : `<div class="list-cover">🎵</div>`;
+
+        row.innerHTML = `
+            ${coverHTML}
+            <div class="list-meta">
+                <div class="list-title">${escapeHTML(data.title)}</div>
+                <div class="list-desc">${escapeHTML(data.desc)} • Плеер</div>
+            </div>
+            <button class="list-heart-btn${isLiked(data.key) ? ' liked' : ''}" data-key="${escapeHTML(data.key)}">❤</button>
+            <button class="list-more-btn">⋮</button>
+        `;
+
+        row.querySelector('.list-heart-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleLike(data.key, e.currentTarget);
+        });
+
+        return row;
+    }
+
+    function renderLikedPlaylistView() {
+        const likedTracks = [...allTracksData]
+            .filter(t => isLiked(t.key))
+            .sort((a, b) => b.timestamp - a.timestamp);
+
+        likedTrackList.innerHTML = "";
+
+        if (likedTracks.length === 0) {
+            likedEmptyState.style.display = 'block';
+            likedTrackList.style.display = 'none';
+        } else {
+            likedEmptyState.style.display = 'none';
+            likedTrackList.style.display = 'flex';
+            likedTracks.forEach((data, index) => {
+                likedTrackList.appendChild(buildTrackRow(data, index, likedTracks));
+            });
+        }
+    }
 
     function renderUI() {
         carouselContainer.innerHTML = "";
@@ -532,7 +700,7 @@
 
             const item = document.createElement('div');
             item.className = 'carousel-item';
-            item.onclick = () => openPlayer(index);
+            item.onclick = () => openPlayer(index, currentFilteredTracks);
 
             const coverHTML = data.cover 
                 ? `<img src="${escapeHTML(data.cover)}" class="carousel-cover" onerror="this.onerror=null; this.outerHTML='<div class=carousel-cover>🎵</div>';">`
@@ -549,26 +717,7 @@
         });
 
         currentFilteredTracks.forEach((data, index) => {
-            const row = document.createElement('div');
-            row.className = 'list-item';
-            row.onclick = (e) => {
-                if(e.target.classList.contains('list-more-btn')) return;
-                openPlayer(index);
-            };
-
-            const coverHTML = data.cover 
-                ? `<img src="${escapeHTML(data.cover)}" class="list-cover" onerror="this.onerror=null; this.outerHTML='<div class=list-cover>🎵</div>';">`
-                : `<div class="list-cover">🎵</div>`;
-
-            row.innerHTML = `
-                ${coverHTML}
-                <div class="list-meta">
-                    <div class="list-title">${escapeHTML(data.title)}</div>
-                    <div class="list-desc">${escapeHTML(data.desc)} • Плеер</div>
-                </div>
-                <button class="list-more-btn">⋮</button>
-            `;
-            verticalTrackList.appendChild(row);
+            verticalTrackList.appendChild(buildTrackRow(data, index, currentFilteredTracks));
         });
     }
 
@@ -579,9 +728,31 @@
     const durationTimeText = document.getElementById('durationTime');
     const reviewBox = document.getElementById('reviewBox');
 
-    function openPlayer(index) {
+    let activePlaylist = currentFilteredTracks;
+
+    // ГЛАВНЫЙ ФИКС: ссылки на файлы Discord CDN "протухают" через некоторое время
+    // (у них есть подпись со сроком действия в самой ссылке). Поэтому старые треки
+    // переставали воспроизводиться. Теперь при загрузке трека мы сохраняем messageId
+    // сообщения в Discord, и перед каждым воспроизведением заново запрашиваем у Discord
+    // свежую, действующую ссылку на файл - так треки остаются доступны всегда.
+    async function getPlayableUrl(track) {
+        if (!track.messageId) return track.url; // очень старые треки без messageId - лучшее, что есть
+        try {
+            const resp = await fetch(`${DISCORD_WEBHOOK_URL}/messages/${track.messageId}`);
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data.attachments && data.attachments[0] && data.attachments[0].url) {
+                    return data.attachments[0].url;
+                }
+            }
+        } catch (e) { /* нет сети - используем то, что было сохранено */ }
+        return track.url;
+    }
+
+    async function openPlayer(index, sourceList) {
+        activePlaylist = sourceList || currentFilteredTracks;
         activeTrackIndex = index;
-        const track = currentFilteredTracks[index];
+        const track = activePlaylist[index];
 
         document.getElementById('pTitle').innerText = track.title;
         document.getElementById('pArtist').innerText = track.desc;
@@ -608,13 +779,39 @@
             reviewBox.style.display = "none";
         }
 
-        audioEngine.src = track.url;
-        audioEngine.play();
-        
+        pLikeBtn.classList.toggle('liked', isLiked(track.key));
+
+        playPauseBtn.innerText = "⏳";
+        miniPlayPauseBtn.innerText = "⏳";
+        miniPlayer.style.display = 'flex';
+
+        const playToken = ++playRequestToken;
+        const playableUrl = await getPlayableUrl(track);
+        if (playToken !== playRequestToken) return; // пользователь уже переключил трек, пока грузилась ссылка
+
+        audioEngine.src = playableUrl;
+        try {
+            await audioEngine.play();
+        } catch (e) { /* автовоспроизведение могло быть заблокировано браузером - ничего страшного */ }
+
         playPauseBtn.innerText = "⏸";
         miniPlayPauseBtn.innerText = "⏸";
-        miniPlayer.style.display = 'flex';
     }
+    let playRequestToken = 0;
+
+    // Если файл всё же не воспроизвёлся (например, сохранённая ссылка успела протухнуть,
+    // а обновить её не вышло) - пробуем один раз принудительно перезапросить свежую ссылку.
+    let audioRetried = false;
+    audioEngine.addEventListener('error', async () => {
+        if (audioRetried || activeTrackIndex === -1) return;
+        const track = activePlaylist[activeTrackIndex];
+        if (!track || !track.messageId) return;
+        audioRetried = true;
+        const freshUrl = await getPlayableUrl(track);
+        audioEngine.src = freshUrl;
+        try { await audioEngine.play(); } catch (e) {}
+        audioRetried = false;
+    });
 
     function togglePlayback() {
         if(audioEngine.paused) {
@@ -633,14 +830,22 @@
     document.getElementById('miniPlayerInfo').addEventListener('click', () => fPlayer.classList.add('open'));
     document.getElementById('closePlayerBtn').addEventListener('click', () => fPlayer.classList.remove('open'));
 
-    document.getElementById('prevBtn').addEventListener('click', () => { if(activeTrackIndex > 0) openPlayer(activeTrackIndex - 1); });
-    const nextTrack = () => { if(activeTrackIndex < currentFilteredTracks.length - 1) openPlayer(activeTrackIndex + 1); };
+    const pLikeBtn = document.getElementById('pLikeBtn');
+    pLikeBtn.addEventListener('click', () => {
+        if(activeTrackIndex === -1) return;
+        const track = activePlaylist[activeTrackIndex];
+        toggleLike(track.key, null);
+        pLikeBtn.classList.toggle('liked', isLiked(track.key));
+    });
+
+    document.getElementById('prevBtn').addEventListener('click', () => { if(activeTrackIndex > 0) openPlayer(activeTrackIndex - 1, activePlaylist); });
+    const nextTrack = () => { if(activeTrackIndex < activePlaylist.length - 1) openPlayer(activeTrackIndex + 1, activePlaylist); };
     document.getElementById('nextBtn').addEventListener('click', nextTrack);
     document.getElementById('miniNextBtn').addEventListener('click', nextTrack);
 
     document.getElementById('deleteTrackBtn').addEventListener('click', async () => {
         if(activeTrackIndex === -1) return;
-        const track = currentFilteredTracks[activeTrackIndex];
+        const track = activePlaylist[activeTrackIndex];
         if(confirm(`Удалить трек "${track.title}"?`)) {
             audioEngine.pause();
             fPlayer.classList.remove('open');
@@ -661,10 +866,24 @@
     document.getElementById('toggleReviewBtn').addEventListener('click', () => { reviewBox.style.display = reviewBox.style.display === "block" ? "none" : "block"; });
 
     document.getElementById('categoriesBox').addEventListener('click', (e) => {
-        if(e.target.classList.contains('category-chip')) {
-            document.querySelectorAll('.category-chip').forEach(c => c.classList.remove('active'));
-            e.target.classList.add('active');
-            currentCategoryFilter = e.target.getAttribute('data-tag');
+        const chip = e.target.closest('.category-chip');
+        if(!chip) return;
+
+        document.querySelectorAll('.category-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        const tag = chip.getAttribute('data-tag');
+
+        if (tag === 'liked') {
+            currentView = 'liked';
+            emptyState.style.display = 'none';
+            document.getElementById('quickSelectionSection').style.display = 'none';
+            document.getElementById('verticalListSection').style.display = 'none';
+            likedPlaylistView.style.display = 'block';
+            renderLikedPlaylistView();
+        } else {
+            currentView = 'normal';
+            likedPlaylistView.style.display = 'none';
+            currentCategoryFilter = tag;
             renderUI();
         }
     });
@@ -673,8 +892,11 @@
         fileInput.value = ''; metaFields.style.display = 'none';
         fileStatusText.innerText = "Выбрать .mp3 файл";
         document.getElementById('trackName').value = ''; document.getElementById('trackDesc').value = '';
-        document.getElementById('trackTag').value = ''; document.getElementById('trackCoverUrl').value = '';
+        document.getElementById('trackTag').value = '';
         document.getElementById('trackReview').value = '';
+        coverInput.value = ''; selectedCoverDataUrl = '';
+        coverPreview.style.display = 'none'; coverPreview.src = '';
+        coverStatusText.innerText = "Выбрать обложку (Необязательно)";
     }
 
     function formatTime(secs) {
@@ -686,5 +908,108 @@
         return str.replace(/[&<>'"]/g, t => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[t] || t));
     }
 </script>
+    <script src="https://cdn.jsdelivr.net/npm/@twemoji/api@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
+    <script>
+    // Рендерим эмодзи в эппловском (iOS/macOS) стиле на любом устройстве,
+    // используя twemoji только как парсер текста, а картинки берём из
+    // набора Apple (emoji-datasource-apple). Если картинка конкретного
+    // эмодзи не грузится (нет сети/нет в наборе) - пробуем альтернативное
+    // имя файла (с/без FE0F), а если и это не выходит - оставляем обычный
+    // текстовый символ.
+    (function () {
+        if (typeof twemoji === 'undefined') return; // библиотека не загрузилась - оставляем обычные эмодзи
+
+        var HEART_SELECTOR = '.list-heart-btn, .player-like-btn';
+        var APPLE_EMOJI_BASE = 'https://cdn.jsdelivr.net/npm/emoji-datasource-apple@15.1.2/img/apple/64/';
+
+        function toggleFe0f(icon) {
+            return icon.indexOf('-fe0f') !== -1
+                ? icon.replace('-fe0f', '')
+                : icon + '-fe0f';
+        }
+
+        var TWEMOJI_OPTS = {
+            className: 'twemoji-icon',
+            callback: function (icon, options) {
+                return APPLE_EMOJI_BASE + icon + '.png';
+            },
+            onerror: function () {
+                var img = this;
+                if (!img.dataset.fallbackTried) {
+                    img.dataset.fallbackTried = '1';
+                    var icon = img.src.split('/').pop().replace('.png', '');
+                    img.src = APPLE_EMOJI_BASE + toggleFe0f(icon) + '.png';
+                } else {
+                    img.outerHTML = img.alt;
+                }
+            }
+        };
+
+        var observer; // объявляем заранее, используем внутри parse()
+
+        function parseSubtree(root) {
+            // Сердечки не трогаем - у них свой текстовый эмодзи с CSS-цветом (серый/красный)
+            if (root.nodeType === 1 && root.matches && root.matches(HEART_SELECTOR)) return;
+            twemoji.parse(root, TWEMOJI_OPTS);
+        }
+
+        function parse(root) {
+            if (!root) return;
+            // Останавливаем наблюдение, чтобы наши собственные изменения DOM
+            // не вызывали повторный запуск этой же функции (иначе бесконечный цикл)
+            if (observer) observer.disconnect();
+            try {
+                if (root.nodeType === 1 && root.querySelectorAll) {
+                    // Обходим все узлы кроме сердечек
+                    if (root.matches && root.matches(HEART_SELECTOR)) {
+                        // сам корень - сердечко, ничего не делаем
+                    } else {
+                        parseSubtree(root);
+                        // twemoji.parse уже сам не трогает вложенные .list-heart-btn текстом,
+                        // т.к. это обычные текстовые узлы внутри - если что-то попало, откатываем
+                        root.querySelectorAll(HEART_SELECTOR).forEach(function (btn) {
+                            var img = btn.querySelector('img.twemoji-icon');
+                            if (img) img.outerHTML = img.alt;
+                        });
+                    }
+                } else {
+                    parseSubtree(root);
+                }
+            } finally {
+                if (observer) observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+            }
+        }
+
+        function ready() {
+            parse(document.body);
+
+            // Следим за динамически добавляемым контентом (плейлисты, треки и т.д.)
+            observer = new MutationObserver(function (mutations) {
+                var roots = new Set();
+                mutations.forEach(function (m) {
+                    m.addedNodes.forEach(function (node) {
+                        if (node.nodeType === 1 || node.nodeType === 3) {
+                            roots.add(node.parentNode || document.body);
+                        }
+                    });
+                });
+                roots.forEach(function (root) { parse(root); });
+            });
+            observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+        }
+
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            ready();
+        } else {
+            document.addEventListener('DOMContentLoaded', ready);
+        }
+
+        // Стили для эмодзи-картинок
+        var style = document.createElement('style');
+        style.textContent = '.twemoji-icon{height:1.15em;width:1.15em;vertical-align:-0.2em;object-fit:contain;display:inline-block;}' +
+            '.carousel-cover .twemoji-icon,.list-cover .twemoji-icon,.player-cover .twemoji-icon,.liked-playlist-cover .twemoji-icon{height:40%;width:40%;vertical-align:middle;}';
+        document.head.appendChild(style);
+    })();
+    </script>
 </body>
 </html>
