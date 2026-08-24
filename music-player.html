@@ -148,7 +148,7 @@
         .mini-player {
             position: fixed; bottom: 0; left: 0; width: 100%; height: 64px;
             background: #ffffff; border-top: 1px solid rgba(26, 5, 46, 0.1); box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-            display: none; align-items: center; justify-content: space-between; padding: 0 16px; z-index: 100; transition: all 0.3s ease;
+            display: none; align-items: center; justify-content: space-between; padding: 0 16px; z-index: 195; transition: all 0.3s ease;
         }
         body.dark-theme .mini-player { background: #242424; border-top-color: rgba(255,255,255,0.08); box-shadow: none; }
         .mini-player-info { display: flex; align-items: center; gap: 10px; flex-grow: 1; overflow: hidden; }
@@ -249,6 +249,41 @@
         body.dark-theme input:checked + .slider-toggle { background-color: #cacaca; }
         input:checked + .slider-toggle:before { transform: translateX(22px); background-color: #000000; }
         body.dark-theme input:checked + .slider-toggle:before { background-color: #2b2b2b; }
+
+        /* КНОПКА ЛУПЫ В ШАПКЕ */
+        .search-icon-btn { background: none; border: none; font-size: 22px; cursor: pointer; line-height: 1; padding: 4px; color: inherit; }
+
+        /* ПОЛНОЭКРАННОЕ МЕНЮ ПОИСКА (DEEZER) */
+        .search-overlay {
+            position: fixed; top: 100%; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(180deg, #f3e8ff 0%, #fdfbff 100%);
+            z-index: 190; transition: top 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
+            padding: 20px 16px; display: flex; flex-direction: column;
+        }
+        body.dark-theme .search-overlay { background: linear-gradient(180deg, #000000f5 0%, #333333 100%); }
+        .search-overlay.open { top: 0; }
+
+        .search-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .search-back-btn { background: none; border: none; cursor: pointer; padding: 6px; display: flex; align-items: center; justify-content: center; color: #0a0a0a; transition: color 0.3s ease; }
+        body.dark-theme .search-back-btn { color: #ffffff; }
+        .search-back-btn svg { width: 22px; height: 22px; display: block; }
+
+        .search-input-field {
+            flex-grow: 1; padding: 12px 14px; border: 1px solid rgba(26, 5, 46, 0.1); border-radius: 20px;
+            background: rgba(26, 5, 46, 0.04); color: #1f1f1f; outline: none; font-size: 15px; transition: all 0.3s ease;
+        }
+        body.dark-theme .search-input-field { background: rgba(255, 255, 255, 0.06); border-color: rgba(255,255,255,0.1); color: #fff; }
+        .search-input-field::placeholder { color: rgba(26, 5, 46, 0.4); }
+        body.dark-theme .search-input-field::placeholder { color: rgba(255,255,255,0.4); }
+
+        .search-go-btn { background: none; border: none; font-size: 20px; cursor: pointer; padding: 6px; color: #0a0a0a; transition: color 0.3s ease; }
+        body.dark-theme .search-go-btn { color: #ffffff; }
+
+        .search-results-list { display: flex; flex-direction: column; gap: 14px; overflow-y: auto; flex-grow: 1; }
+        .search-hint, .search-empty, .search-loading {
+            text-align: center; padding: 40px 20px; color: rgba(31, 31, 31, 0.5); font-size: 14px;
+        }
+        body.dark-theme .search-hint, body.dark-theme .search-empty, body.dark-theme .search-loading { color: rgba(255,255,255,0.4); }
     </style>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
@@ -273,7 +308,10 @@
 
 <div class="container">
     <div class="header-actions">
-        <span class="chatter-logo">ChattMusic</span>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <span class="chatter-logo">ChattMusic</span>
+            <button class="search-icon-btn" id="openSearchBtn" aria-label="Поиск">🔎</button>
+        </div>
         <button class="add-to-channel-btn" id="openSidebarBtn">+ Добавить</button>
         <div class="my-channel-btn" id="myChannelBtn">
             <span id="pPlaceholder">👤</span>
@@ -356,6 +394,21 @@
         <button class="footer-action-btn" id="toggleReviewBtn">Текст</button>
     </div>
     <div class="review-overlay-box" id="reviewBox"></div>
+</div>
+
+<div class="search-overlay" id="searchOverlay">
+    <div class="search-bar-row">
+        <button class="search-back-btn" id="searchBackBtn" aria-label="Назад">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </button>
+        <input type="text" class="search-input-field" id="searchInputField" placeholder="Название песни...">
+        <button class="search-go-btn" id="searchGoBtn" aria-label="Искать">🔎</button>
+    </div>
+    <div class="search-results-list" id="searchResultsList">
+        <div class="search-hint" id="searchHintState">Введите название песни, чтобы найти её</div>
+    </div>
 </div>
 
 <div class="sidebar" id="sidebar">
@@ -591,11 +644,27 @@
         return likedTrackKeys.includes(key);
     }
 
-    function toggleLike(key, btnEl) {
+    // Треки из поиска Deezer не хранятся в общей базе Firebase (allTracksData),
+    // поэтому чтобы такой трек мог появиться в "Понравившейся музыке", его
+    // данные (название, обложка, ссылка на превью) сохраняем отдельно в
+    // localStorage при лайке.
+    let likedExtraTracks = JSON.parse(localStorage.getItem('chatter_liked_extra_tracks') || '{}');
+
+    function saveLikedExtraTrack(trackData) {
+        likedExtraTracks[trackData.key] = trackData;
+        localStorage.setItem('chatter_liked_extra_tracks', JSON.stringify(likedExtraTracks));
+    }
+
+    function toggleLike(key, btnEl, trackData) {
         if (navigator.vibrate) navigator.vibrate(40);
         const idx = likedTrackKeys.indexOf(key);
         if (idx === -1) {
             likedTrackKeys.push(key);
+            // Если трек не из общей базы (например, из поиска Deezer) - сохраняем его данные,
+            // чтобы он мог отобразиться в плейлисте "Понравившаяся музыка"
+            if (trackData && !allTracksData.some(t => t.key === key)) {
+                saveLikedExtraTrack(trackData);
+            }
         } else {
             likedTrackKeys.splice(idx, 1);
         }
@@ -605,7 +674,7 @@
             btnEl.classList.toggle('liked', isLiked(key));
         }
         // Обновить сердечко в полноэкранном плеере, если открыт этот же трек
-        if (activeTrackIndex !== -1 && currentFilteredTracks[activeTrackIndex] && currentFilteredTracks[activeTrackIndex].key === key) {
+        if (activeTrackIndex !== -1 && activePlaylist[activeTrackIndex] && activePlaylist[activeTrackIndex].key === key) {
             pLikeBtn.classList.toggle('liked', isLiked(key));
         }
         // Если сейчас открыт плейлист "Понравившаяся музыка" - перерисовать его
@@ -641,16 +710,21 @@
 
         row.querySelector('.list-heart-btn').addEventListener('click', (e) => {
             e.stopPropagation();
-            toggleLike(data.key, e.currentTarget);
+            toggleLike(data.key, e.currentTarget, data);
         });
 
         return row;
     }
 
     function renderLikedPlaylistView() {
-        const likedTracks = [...allTracksData]
-            .filter(t => isLiked(t.key))
-            .sort((a, b) => b.timestamp - a.timestamp);
+        const likedFromDb = allTracksData.filter(t => isLiked(t.key));
+        const likedFromDbKeys = new Set(likedFromDb.map(t => t.key));
+        // Треки из поиска (Deezer), которых нет в общей базе, но которые лайкнули
+        const likedExtras = likedTrackKeys
+            .filter(k => !likedFromDbKeys.has(k) && likedExtraTracks[k])
+            .map(k => likedExtraTracks[k]);
+
+        const likedTracks = [...likedFromDb, ...likedExtras].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
         likedTrackList.innerHTML = "";
 
@@ -834,7 +908,7 @@
     pLikeBtn.addEventListener('click', () => {
         if(activeTrackIndex === -1) return;
         const track = activePlaylist[activeTrackIndex];
-        toggleLike(track.key, null);
+        toggleLike(track.key, null, track);
         pLikeBtn.classList.toggle('liked', isLiked(track.key));
     });
 
@@ -864,6 +938,79 @@
 
     progressBar.addEventListener('input', () => { audioEngine.currentTime = (progressBar.value / 100) * audioEngine.duration; });
     document.getElementById('toggleReviewBtn').addEventListener('click', () => { reviewBox.style.display = reviewBox.style.display === "block" ? "none" : "block"; });
+
+    // =====================================================
+    // ПОИСК ТРЕКОВ ЧЕРЕЗ JAMENDO (полностью бесплатный API,
+    // работает напрямую из браузера без прокси и без секретного
+    // ключа - только client_id, который безопасно использовать
+    // на клиенте). Библиотека Jamendo - независимые артисты и
+    // треки по лицензии Creative Commons, зато треки ПОЛНЫЕ,
+    // а не 30-секундные превью.
+    // =====================================================
+    const JAMENDO_CLIENT_ID = "6ebec8b1";
+    const searchOverlay = document.getElementById('searchOverlay');
+    const searchInputField = document.getElementById('searchInputField');
+    const searchResultsList = document.getElementById('searchResultsList');
+    let jamendoResults = [];
+    let jamendoSearchToken = 0;
+
+    document.getElementById('openSearchBtn').addEventListener('click', () => {
+        searchOverlay.classList.add('open');
+        setTimeout(() => searchInputField.focus(), 300);
+    });
+
+    document.getElementById('searchBackBtn').addEventListener('click', () => {
+        searchOverlay.classList.remove('open');
+    });
+
+    document.getElementById('searchGoBtn').addEventListener('click', runJamendoSearch);
+    searchInputField.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') runJamendoSearch();
+    });
+
+    async function runJamendoSearch() {
+        const query = searchInputField.value.trim();
+        if (!query) return;
+
+        const myToken = ++jamendoSearchToken;
+        searchResultsList.innerHTML = '<div class="search-loading">Ищем на Jamendo...</div>';
+
+        try {
+            const apiUrl = `https://api.jamendo.com/v3.0/tracks/?client_id=${JAMENDO_CLIENT_ID}&format=json&limit=25&namesearch=${encodeURIComponent(query)}&include=musicinfo&audioformat=mp32`;
+            const resp = await fetch(apiUrl);
+            if (!resp.ok) throw new Error('bad response: ' + resp.status);
+            const data = await resp.json();
+            if (myToken !== jamendoSearchToken) return; // пользователь уже запустил новый поиск
+
+            const tracks = (data.results || []);
+            jamendoResults = tracks.map(t => ({
+                key: `jamendo_${t.id}`,
+                title: t.name,
+                desc: t.artist_name || 'Неизвестный исполнитель',
+                cover: t.album_image || t.image || '',
+                url: t.audio, // полный трек, не превью
+                timestamp: 0,
+                ownerId: null,
+                messageId: null
+            })).filter(t => t.url);
+
+            renderJamendoResults();
+        } catch (e) {
+            if (myToken !== jamendoSearchToken) return;
+            searchResultsList.innerHTML = '<div class="search-empty">Не удалось выполнить поиск. Попробуйте ещё раз.</div>';
+        }
+    }
+
+    function renderJamendoResults() {
+        searchResultsList.innerHTML = '';
+        if (jamendoResults.length === 0) {
+            searchResultsList.innerHTML = '<div class="search-empty">Ничего не найдено</div>';
+            return;
+        }
+        jamendoResults.forEach((data, index) => {
+            searchResultsList.appendChild(buildTrackRow(data, index, jamendoResults));
+        });
+    }
 
     document.getElementById('categoriesBox').addEventListener('click', (e) => {
         const chip = e.target.closest('.category-chip');
